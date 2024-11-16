@@ -106,6 +106,11 @@ def generate_aggregate_query(
             , country
             , state
             , city
+        ORDER BY
+            brewery_type DESC
+            , country DESC
+            , state DESC
+            , city DESC
         """
 
 
