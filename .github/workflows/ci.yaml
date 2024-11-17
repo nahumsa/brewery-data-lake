@@ -16,5 +16,8 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup
+        run: make setup
+
       - name: Test
         run: make test
