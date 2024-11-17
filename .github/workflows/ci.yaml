@@ -16,6 +16,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup
+        run: |
+          make setup
+
+      - name: Style
+        run: |
+          make check_style
+
       - name: Test
         run: |
           make test

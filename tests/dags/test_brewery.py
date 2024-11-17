@@ -1,5 +1,7 @@
-import duckdb
 from uuid import UUID
+
+import duckdb
+
 from dags.brewery import generate_aggregate_query, generate_transform_query
 
 

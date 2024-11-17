@@ -8,12 +8,13 @@ from typing import Any, Optional
 import duckdb
 import pendulum
 import requests
-from airflow import DAG
-from airflow.exceptions import AirflowException
 from airflow.datasets import Dataset
 from airflow.decorators import task
+from airflow.exceptions import AirflowException
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from sqlalchemy.log import logging
+
+from airflow import DAG
 
 
 class APIMetadata(BaseModel):
