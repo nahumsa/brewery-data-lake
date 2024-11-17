@@ -113,4 +113,6 @@ for the person responsible for the pipeline.
 The Data Quality is assessed by using a [Pydantic](https://docs.pydantic.dev/latest/) Model
 to make sure that columns that are used for partitions
 (`country`, `state`, and `city`) are not null.
+If any of the entries that are fetched from the API do not comply
+with our data model, then the pipeline will fail.
 
