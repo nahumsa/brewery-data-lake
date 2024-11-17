@@ -26,11 +26,11 @@ class BreweryData(BaseModel):
     id: str
     name: str
     brewery_type: str
-    city: str
     state_province: str
     postal_code: str
     country: str
     state: str
+    city: str
     address_1: Optional[str]
     address_2: Optional[str]
     address_3: Optional[str]
@@ -202,7 +202,7 @@ with DAG(
         return len(data) == metadata.total
 
     @task.short_circuit()
-    def bronze_evaluator(value):
+    def bronze_evaluator(value: bool) -> bool:
         return value
 
     @task(
