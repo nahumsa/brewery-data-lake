@@ -28,6 +28,8 @@ Using the medallion architecture for efficient data management.
    ```
 
 3. **Set Up Airflow**:
+ If it's your first time running, you should run:
+`echo -e "AIRFLOW_UID=$(id -u)" > .env`
 
    ```bash
    docker-compose up
@@ -115,4 +117,3 @@ to make sure that columns that are used for partitions
 (`country`, `state`, and `city`) are not null.
 If any of the entries that are fetched from the API do not comply
 with our data model, then the pipeline will fail.
-
