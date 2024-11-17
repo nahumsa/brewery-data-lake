@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import timedelta
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Optional
 
 import duckdb
 import pendulum
@@ -132,16 +132,47 @@ def generate_transform_query(
         """
 
 
+def sla_callback(
+    dag: Any,
+    task_list: list[Any],
+    blocking_task_list: list[Any],
+    slas: Any,
+    blocking_tis: Any,
+):
+    """Callback for when a SLA is missed, this could
+    be an email or slack message.
+
+    Args:
+        dag: DAG that missed the SLA.
+        task_list: list of tasks in the dag.
+        blocking_task_list: list of tasks that missed.
+        slas: which slas missed
+        blocking_tis: ...
+    """
+    print(
+        "Missed the SLAs in the following DAG",
+        {
+            "dag": dag,
+            "task_list": task_list,
+            "blocking_task_list": blocking_task_list,
+            "slas": slas,
+            "blocking_tis": blocking_tis,
+        },
+    )
+
+
 with DAG(
     dag_id="brewery_dataset",
     start_date=pendulum.datetime(2024, 1, 1, tz="UTC"),
     schedule_interval="0 0 * * *",
     default_args={
+        "owner": "Nahum",
         "retries": 3,
         "retry_delay": timedelta(minutes=5),
     },
     catchup=False,
     tags=["producer", "dataset", "brewery", "analytics"],
+    sla_miss_callback=sla_callback,  # type: ignore
 ):
     raw_dataset = Dataset("/opt/airflow/dags/files/bronze/breweries.json")
     silver_dataset = Dataset("/opt/airflow/dags/files/silver/breweries")
@@ -149,7 +180,7 @@ with DAG(
         "/opt/airflow/dags/files/gold/aggregate_breweries_count.parquet"
     )
 
-    @task(outlets=[raw_dataset])
+    @task(outlets=[raw_dataset], sla=timedelta(minutes=5))
     def save_bronze():
         metadata = get_api_metadata()
 
@@ -163,7 +194,11 @@ with DAG(
         save_json(raw_dataset.uri, [entry.model_dump() for entry in data])
         yield Metadata(raw_dataset, {"row_count": len(data)})
 
-    @task(inlets=[raw_dataset], outlets=[silver_dataset])
+    @task(
+        inlets=[raw_dataset],
+        outlets=[silver_dataset],
+        sla=timedelta(minutes=1),
+    )
     def save_silver():
         os.makedirs(os.path.dirname(silver_dataset.uri), exist_ok=True)
         con = duckdb.connect(database=":memory:")
@@ -185,7 +220,11 @@ with DAG(
 
         con.close()
 
-    @task(inlets=[silver_dataset], outlets=[gold_dataset])
+    @task(
+        inlets=[silver_dataset],
+        outlets=[gold_dataset],
+        sla=timedelta(minutes=1),
+    )
     def save_gold():
         os.makedirs(os.path.dirname(gold_dataset.uri), exist_ok=True)
         con = duckdb.connect(database=":memory:")
