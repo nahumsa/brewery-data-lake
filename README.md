@@ -42,7 +42,9 @@ or you can see by using the tags attached to the `DAG`, such as `producer`, `bre
 
 ## Data Pipeline Overview
 
-The purpose of the pipeline is to fetch data from an API
+The purpose of the pipeline is to fetch data from Open Brewery DB API,
+load it to a Data Lake and transform it using a medallion architecture.
+The data pipeline steps are illustrated in the following diagram:
 
 ```mermaid
 flowchart TD
@@ -70,9 +72,34 @@ flowchart TD
 
 ```
 
-The Airflow data pipeline consists of the following tasks:
+### Pipeline Observability
 
-- **Fetch Data**: Fetches data from the brewery API.
-- **Transform Data**: Processes the fetched data (e.g., cleaning, transforming).
-- **Store Data**: Stores the processed data in a data lake (e.g., S3).
+Each step of the pipeline is monitored by a given Service Level Agreement (SLA)
+that was defined by analyzing the runtime of each task. This will help monitor
+the Data Pipeline and also show some potential improvements that could be done
+for speeding up the Pipeline. When any SLA is not met, it is possible to
+implement an alerting tool such an email or slack message for the responsible
+for the pipeline by using the `sla_callback` function.
+
+Also when there is any fail on the pipeline, an alerting can be sent, let's say
+by email. This can be set up by adding the SMTP configuration on `airflow.conf`, for instance:
+
+```bash
+[email]
+email_backend = airflow.utils.email.send_email_smtp
+[smtp]
+smtp_host = localhost
+smtp_starttls = False
+smtp_ssl = False
+smtp_port = 25
+smtp_mail_from = noreply@company.com
+```
+
+or you could also: [configure by GMail](<https://helptechcommunity.wordpress.com/2020/04/04/airflow-email-configuration/>).
+
+### Pipeline steps
+
+#### Bronze
+
+In order to save to the bronze layer, we must fetch the
 
