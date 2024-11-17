@@ -101,5 +101,16 @@ or you could also: [configure by GMail](<https://helptechcommunity.wordpress.com
 
 #### Bronze
 
-In order to save to the bronze layer, we must fetch the
+In order to save to the bronze layer, we must fetch the data from the Open
+Brewery DB API, thus we must use two endpoint, one to understand the metadata
+of the data being fetched (quantity, entries per page) and another to
+fetch the data. Since Data Quality must be in the forefront, we must make sure
+that the we fetch all the data, thus we make a check in the pipeline that all
+data is fetched, if the quantity is different from what we gathered with the
+API's metadata we should short-circuit the pipeline and then send a notification
+for the person responsible for the pipeline.
+
+The Data Quality is assessed by using a [Pydantic](https://docs.pydantic.dev/latest/) Model
+to make sure that columns that are used for partitions
+(`country`, `state`, and `city`) are not null.
 
