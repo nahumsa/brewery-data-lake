@@ -3,14 +3,14 @@ from __future__ import annotations
 import json
 import os
 from datetime import timedelta
-from typing import Any, Optional, Generator
+from typing import Any, Optional
 
 import duckdb
 import pendulum
 import requests
 from airflow import DAG
+from airflow.exceptions import AirflowException
 from airflow.datasets import Dataset
-from airflow.datasets.metadata import Metadata
 from airflow.decorators import task
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from sqlalchemy.log import logging
@@ -193,7 +193,7 @@ with DAG(
 
         except ValidationError as e:
             logging.error(f"Validation error for the API data model: {e}")
-            return False
+            raise AirflowException(f"Validation error for the API data model: {e}")
 
         save_json(raw_dataset.uri, [entry.model_dump() for entry in data])
 
