@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import timedelta
+from typing import Any, Optional, Generator
 
 import duckdb
 import pendulum
@@ -12,7 +12,8 @@ from airflow import DAG
 from airflow.datasets import Dataset
 from airflow.datasets.metadata import Metadata
 from airflow.decorators import task
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
+from sqlalchemy.log import logging
 
 
 class APIMetadata(BaseModel):
@@ -181,18 +182,28 @@ with DAG(
     )
 
     @task(outlets=[raw_dataset], sla=timedelta(minutes=5))
-    def save_bronze():
+    def save_bronze(*, outlet_events: Any) -> bool:
         metadata = get_api_metadata()
 
         data = []
 
-        for page in range(1, metadata.total // metadata.per_page + 2):
-            data.extend(get_api_data(page=page, per_page=metadata.per_page))
+        try:
+            for page in range(1, metadata.total // metadata.per_page + 2):
+                data.extend(get_api_data(page=page, per_page=metadata.per_page))
 
-        assert len(data) == metadata.total, "Unable do fetch all data"
+        except ValidationError as e:
+            logging.error(f"Validation error for the API data model: {e}")
+            return False
 
         save_json(raw_dataset.uri, [entry.model_dump() for entry in data])
-        yield Metadata(raw_dataset, {"row_count": len(data)})
+
+        outlet_events[raw_dataset].extra = {"row_count": len(data)}
+
+        return len(data) == metadata.total
+
+    @task.short_circuit()
+    def bronze_evaluator(value):
+        return value
 
     @task(
         inlets=[raw_dataset],
@@ -238,4 +249,4 @@ with DAG(
 
         con.close()
 
-    save_bronze() >> save_silver() >> save_gold()  # type: ignore
+    bronze_evaluator(save_bronze()) >> save_silver() >> save_gold()  # type: ignore
