@@ -71,6 +71,9 @@ flowchart TD
     n9 --> n7
 
     n1@{ shape: dbl-circ}
+     n8:::Rose
+     n9:::Rose
+    classDef Rose stroke-width:1px, stroke-dasharray:none, stroke:#FF5978, fill:#FFDFE5, color:#8E2236
     style n3 stroke:#D50000
     style n4 stroke:#FFD600
     style n5 stroke:#00C853
