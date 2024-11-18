@@ -8,9 +8,13 @@ from typing import Any
 import duckdb
 import pendulum
 from airflow.datasets import Dataset
-from airflow.decorators import task
+from airflow.decorators import task, task_group
 from airflow.exceptions import AirflowException
 from brewery.duckdb.aggregate import generate_aggregate_query
+from brewery.duckdb.data_quality import (
+    generate_id_uniquiness_query,
+    generate_valid_brewery_type_query,
+)
 from brewery.duckdb.transform import generate_transform_query
 from brewery.extract.api import get_api_data, get_api_metadata
 from pydantic import ValidationError
@@ -130,6 +134,46 @@ with DAG(
 
         con.close()
 
+    @task_group
+    def data_quality_check():
+        @task.short_circuit(
+            inlets=[silver_dataset],
+        )
+        def validate_uniquiness() -> bool:
+            con = duckdb.connect(database=":memory:")
+
+            con.execute(
+                generate_id_uniquiness_query(
+                    read_filepath=f"{silver_dataset.uri}/**/*.parquet"
+                )
+            )
+
+            data = con.fetchall()
+
+            con.close()
+
+            return data == []
+
+        @task.short_circuit(
+            inlets=[silver_dataset],
+        )
+        def validate_brewery_type() -> bool:
+            con = duckdb.connect(database=":memory:")
+
+            con.execute(
+                generate_valid_brewery_type_query(
+                    read_filepath=f"{silver_dataset.uri}/**/*.parquet"
+                )
+            )
+
+            data = con.fetchall()
+
+            con.close()
+
+            return data == []
+
+        [validate_brewery_type(), validate_uniquiness()]  # type: ignore
+
     @task(
         inlets=[silver_dataset],
         outlets=[gold_dataset],
@@ -148,4 +192,4 @@ with DAG(
 
         con.close()
 
-    bronze_evaluator(save_bronze()) >> save_silver() >> save_gold()  # type: ignore
+    bronze_evaluator(save_bronze()) >> save_silver() >> data_quality_check() >> save_gold()  # type: ignore
