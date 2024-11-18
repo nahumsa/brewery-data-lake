@@ -118,8 +118,51 @@ data is fetched, if the quantity is different from what we gathered with the
 API's metadata we should short-circuit the pipeline and then send a notification
 for the person responsible for the pipeline.
 
-The Data Quality is assessed by using a [Pydantic](https://docs.pydantic.dev/latest/) Model
+The Data Quality is assessed by using a
+[Pydantic](https://docs.pydantic.dev/latest/) Model
 to make sure that columns that are used for partitions
 (`country`, `state`, and `city`) are not null.
 If any of the entries that are fetched from the API do not comply
 with our data model, then the pipeline will fail.
+
+#### Silver
+
+For the silver layer, we must read and process the data that was saved on the bronze layer.
+
+In this pipeline we choose to use DuckDB mainly because it is a lightweight and embedded
+database which makes it easier to iterate locally. Another reason is that for the size
+of the data that we have we do not need distributed compute such as Apache Spark, however
+we could use the [same API as Spark](https://duckdb.org/docs/api/python/spark_api.html)
+for transformations by using DuckDB making easier to debug locally spark pipelines without
+the arduous set up that Apache Spark needs.
+
+It is performed the following transformations for the dataset:
+
+- Convert `brewery_type`, `city`, `state_province`, `state`, and `country` to lowercase mainly
+because there could be upper case differences in the dataset which would not represent the
+same values.
+- Convert `longitude` and `latitude` to floats because it is important to keep the precision
+needed for those variables since the number of decimal places represent the precision. Also
+it's important to keep as float because requires less memory.
+- Remove `website_url` that have `@gmail.com` which are emails and not URLs.
+
+We also transform the data to Parquet and partition by `country`, `state`, and `city`
+which makes it easier to query analytics pipelines regarding the location of the brewery
+which is important for multiple reasons, for instance:
+
+- Reducing the amount of data scanned, making cheaper, and speeds up query execution.
+- Partitioning divides large datasets into smaller, manageable chunks.
+This allows distributed systems to process different partitions in parallel,
+leveraging the full power of cluster computing.
+- Provides a hierarchical directory structure, making the dataset
+easier to understand and manage.
+- Partitioning makes it easier to append new data to specific partitions without rewriting
+the entire dataset.
+
+In this step of the pipeline we have the following data quality checks:
+
+- `brewery_type` must have the values `'taproom', 'micro', 'contract',
+'location', 'planning', 'bar', 'regional', 'large', 'beergarden', 'brewpub',
+'proprietor', 'closed', 'nano'`.
+- `website_url` must be a properly formatted URL, which starts with `http://`, or null.
+- `id` must be unique for all values.
