@@ -1,4 +1,4 @@
-<h1 align="center">Brewery Location Data Lake</h1>
+<h1 align="center">Brewery Data Lake</h1>
 <p align="center">
 <a href="https://github.com/nahumsa/brewery-data-lake/actions"><img alt="Actions Status" src="https://github.com/nahumsa/brewery-data-lake/actions/workflows/ci.yaml/badge.svg"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
