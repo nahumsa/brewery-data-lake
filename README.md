@@ -8,14 +8,44 @@
 
 ## Project Overview
 
-This project fetches data from a brewery API and sets up an Airflow data pipeline to process and store the data in a data lake.
+The purpose of this project is to design and implement an
+Extract, Load, Transform (ELT) pipeline that fetches data
+from the [Open Brewery DB](<https://api.openbrewerydb.org/>)
+and utilizes a medallion architecture within a data lake.
+The goal is to ensure efficient, scalable, and reliable data ingestion,
+transformation, and storage.
 
-Using the medallion architecture for efficient data management.
+The project leverages modern data engineering tools to orchestrate
+workflows, manage large datasets, and optimize query performance.
+
+### Orchestration & Processing
+
+#### Airflow
+
+Airflow is used as the orchestrator for the pipeline. It handles the
+scheduling, monitoring, and execution of tasks in the pipeline,
+ensuring that each step is performed in the correct order and
+at the right time. Airflow also provides error handling, retries,
+and logging, making it a reliable tool for managing complex workflows.
+
+This project uses airflow features such as `Datasets`, `task_groups`, and
+`ShortCircuit`.
+
+#### DuckDB
+
+DuckDB serves as the compute engine for querying and transforming the data.
+It is an efficient, in-process SQL query engine that works seamlessly with
+data stored in columnar formats such as Parquet or Delta. DuckDB can perform
+fast analytical queries on large datasets, which makes it an ideal choice
+for performing transformations at scale, especially within a data lake
+environment. DuckDB's high-performance execution engine allows for the
+execution of complex SQL queries without the need for external compute clusters.
 
 ## Prerequisites
 
 - Python 3.12 or higher
 - pip
+- DuckDB
 - Docker (for running Airflow)
 
 ## Installation Guide
