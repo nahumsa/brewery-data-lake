@@ -63,10 +63,12 @@ flowchart TD
   end
     n1["Brewery API"] --> n2["Extract Data"]
     n2 -- Save raw JSON --> n3
-    n2 --> n6["Transform Data"]
-    n6 --> n7["Aggregate Data"]
+    n2 --> n8["Circuit Breaker (Unable to get all data)"]
+    n6["Transform Data"] --> n9["Circuit Breaker (Data Quality)"]
     n6 -- DuckDB --> n4
-    n7 -- DuckDB --> n5
+    n7["Aggregate Data"] -- DuckDB --> n5
+    n8 --> n6
+    n9 --> n7
 
     n1@{ shape: dbl-circ}
     style n3 stroke:#D50000
@@ -76,8 +78,6 @@ flowchart TD
     style n6 stroke:#000000
     style n7 stroke:#000000
     style s1 stroke:#000000
-
-
 ```
 
 ### Pipeline Observability
@@ -104,6 +104,19 @@ smtp_mail_from = noreply@company.com
 ```
 
 Or you could also: [configure to use GMail](<https://helptechcommunity.wordpress.com/2020/04/04/airflow-email-configuration/>).
+
+### Pipeline Patterns
+
+#### Circuit Breaker
+
+In data pipelines, data quality issues can arise at various stages. When these issues
+occur, continuing with data processing might lead to inaccurate analysis or
+downstream failures.
+
+Thus this projects implement a circuit breaker pattern which will halt the data processing
+at an early stage when issues are detected.
+This prevents bad data to propagate through the pipeline, making data quality a first-class
+citizen. After the data quality issue is resolved, then the data pipeline can resume.
 
 ### Pipeline steps
 
@@ -165,7 +178,6 @@ In this step of the pipeline we have the following data quality checks:
 - `brewery_type` must have the values `'taproom', 'micro', 'contract',
 'location', 'planning', 'bar', 'regional', 'large', 'beergarden', 'brewpub',
 'proprietor', 'closed', 'nano'`.
-- `website_url` must be a properly formatted URL, which starts with `http://`, or null.
 - `id` must be unique for all values.
 
 #### Aggregating data and loading to the Gold layer
