@@ -78,11 +78,11 @@ with DAG(
     tags=["producer", "dataset", "brewery", "analytics"],
     sla_miss_callback=sla_callback,  # type: ignore
 ):
-    raw_dataset = Dataset("/opt/airflow/dags/files/bronze/breweries.json")
-    silver_dataset = Dataset("/opt/airflow/dags/files/silver/breweries")
-    gold_dataset = Dataset(
-        "/opt/airflow/dags/files/gold/aggregate_breweries_count.parquet"
-    )
+    base_path = "/opt/airflow/data/brewery/"
+
+    raw_dataset = Dataset(f"{base_path}bronze/breweries.json")
+    silver_dataset = Dataset(f"{base_path}silver/breweries")
+    gold_dataset = Dataset(f"{base_path}gold/aggregate_breweries_count.parquet")
 
     @task(outlets=[raw_dataset], sla=timedelta(minutes=5))
     def save_bronze(*, outlet_events: Any) -> bool:
