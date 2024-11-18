@@ -113,6 +113,11 @@ flowchart TD
     style s1 stroke:#000000
 ```
 
+Even though in the data data pipeline, we save the files
+locally, it is completely possible to save it to any
+blob storage by only changing some configuration on
+DuckDB and the `save_json` function.
+
 ### Pipeline Observability
 
 Each step of the pipeline is monitored by a given Service Level Agreement (SLA)
