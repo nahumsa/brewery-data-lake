@@ -103,11 +103,11 @@ smtp_port = 25
 smtp_mail_from = noreply@company.com
 ```
 
-or you could also: [configure by GMail](<https://helptechcommunity.wordpress.com/2020/04/04/airflow-email-configuration/>).
+Or you could also: [configure to use GMail](<https://helptechcommunity.wordpress.com/2020/04/04/airflow-email-configuration/>).
 
 ### Pipeline steps
 
-#### Bronze
+#### Getting data from API and loading to the Bronze Layer
 
 In order to save to the bronze layer, we must fetch the data from the Open
 Brewery DB API, thus we must use two endpoint, one to understand the metadata
@@ -125,12 +125,13 @@ to make sure that columns that are used for partitions
 If any of the entries that are fetched from the API do not comply
 with our data model, then the pipeline will fail.
 
-#### Silver
+#### Transformation and Loading to the Silver Layer
 
 For the silver layer, we must read and process the data that was saved on the bronze layer.
 
-In this pipeline we choose to use DuckDB mainly because it is a lightweight and embedded
-database which makes it easier to iterate locally. Another reason is that for the size
+In this pipeline we choose to use DuckDB as the compute engine
+mainly because it is a lightweight and embedded database which makes it easier to
+iterate locally. Another reason is that for the size
 of the data that we have we do not need distributed compute such as Apache Spark, however
 we could use the [same API as Spark](https://duckdb.org/docs/api/python/spark_api.html)
 for transformations by using DuckDB making easier to debug locally spark pipelines without
@@ -166,3 +167,10 @@ In this step of the pipeline we have the following data quality checks:
 'proprietor', 'closed', 'nano'`.
 - `website_url` must be a properly formatted URL, which starts with `http://`, or null.
 - `id` must be unique for all values.
+
+#### Aggregating data and loading to the Gold layer
+
+In order to create an aggregated view with the quantity of breweries per type and
+location we again use DuckDB for the compute engine and save the aggregated view
+as a parquet file making it easy to use it. It was chosen not to partition
+the data since it is small and small partitions make the read slower.
