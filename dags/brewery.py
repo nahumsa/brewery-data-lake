@@ -144,7 +144,10 @@ def generate_transform_query(
             , CAST(longitude AS FLOAT) AS longitude
             , CAST(latitude AS FLOAT) AS latitude
             , phone
-            , website_url
+            , CASE
+                WHEN website_url LIKE '%@gmail.com%' THEN NULL
+                ELSE website_url
+            END AS website_url
         FROM {read_method}('{read_filepath}')
         """
 
