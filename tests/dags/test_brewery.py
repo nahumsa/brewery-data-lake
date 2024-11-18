@@ -2,7 +2,8 @@ from uuid import UUID
 
 import duckdb
 
-from dags.brewery import generate_aggregate_query, generate_transform_query
+from dags.brewery.duckdb.aggregate import generate_aggregate_query
+from dags.brewery.duckdb.transform import generate_transform_query
 
 
 class TestGenerateAggregateQuery:
@@ -92,7 +93,7 @@ class TestGenerateTransformedQuery:
                 "city": "norman",
                 "state_province": "oklahoma",
                 "state": "oklahoma",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "73069-8224",
                 "longitude": -97.46818542480469,
                 "latitude": 35.257389068603516,
@@ -109,7 +110,7 @@ class TestGenerateTransformedQuery:
                 "city": "austin",
                 "state_province": "texas",
                 "state": "texas",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "78745-1197",
                 "longitude": None,
                 "latitude": None,
@@ -126,7 +127,7 @@ class TestGenerateTransformedQuery:
                 "city": "mount pleasant",
                 "state_province": "wisconsin",
                 "state": "wisconsin",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "53406-3920",
                 "longitude": -87.88336181640625,
                 "latitude": 42.72010803222656,
@@ -143,7 +144,7 @@ class TestGenerateTransformedQuery:
                 "city": "san diego",
                 "state_province": "california",
                 "state": "california",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "92101-6618",
                 "longitude": -117.12959289550781,
                 "latitude": 32.714813232421875,
@@ -160,7 +161,7 @@ class TestGenerateTransformedQuery:
                 "city": "bend",
                 "state_province": "oregon",
                 "state": "oregon",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "97701-9847",
                 "longitude": -121.28170776367188,
                 "latitude": 44.08683395385742,
@@ -177,7 +178,7 @@ class TestGenerateTransformedQuery:
                 "city": "bend",
                 "state_province": "oregon",
                 "state": "oregon",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "97703-2465",
                 "longitude": -121.32880401611328,
                 "latitude": 44.05756378173828,
@@ -194,7 +195,7 @@ class TestGenerateTransformedQuery:
                 "city": "portland",
                 "state_province": "oregon",
                 "state": "oregon",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "97209-2620",
                 "longitude": -122.68550872802734,
                 "latitude": 45.525978088378906,
@@ -211,7 +212,7 @@ class TestGenerateTransformedQuery:
                 "city": "bend",
                 "state_province": "oregon",
                 "state": "oregon",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "97701",
                 "longitude": -121.28095245361328,
                 "latitude": 44.091209411621094,
@@ -228,7 +229,7 @@ class TestGenerateTransformedQuery:
                 "city": "boise",
                 "state_province": "idaho",
                 "state": "idaho",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "83702-5857",
                 "longitude": -116.20292663574219,
                 "latitude": 43.61851501464844,
@@ -245,7 +246,7 @@ class TestGenerateTransformedQuery:
                 "city": "denver",
                 "state_province": "colorado",
                 "state": "colorado",
-                "contry": "united states",
+                "country": "united states",
                 "postal_code": "80205-2231",
                 "longitude": -104.98536682128906,
                 "latitude": 39.75925064086914,

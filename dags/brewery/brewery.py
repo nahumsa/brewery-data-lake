@@ -3,70 +3,20 @@ from __future__ import annotations
 import json
 import os
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 
 import duckdb
 import pendulum
-import requests
 from airflow.datasets import Dataset
 from airflow.decorators import task
 from airflow.exceptions import AirflowException
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from brewery.duckdb.aggregate import generate_aggregate_query
+from brewery.duckdb.transform import generate_transform_query
+from brewery.extract.api import get_api_data, get_api_metadata
+from pydantic import ValidationError
 from sqlalchemy.log import logging
 
 from airflow import DAG
-
-
-class APIMetadata(BaseModel):
-    total: int
-    page: int
-    per_page: int
-
-
-class BreweryData(BaseModel):
-    id: str
-    name: str
-    brewery_type: str
-    state_province: str
-    postal_code: str
-    country: str
-    state: str
-    city: str
-    address_1: Optional[str]
-    address_2: Optional[str]
-    address_3: Optional[str]
-    longitude: Optional[float]
-    latitude: Optional[float]
-    phone: Optional[str]
-    website_url: Optional[str]
-    street: Optional[str]
-
-
-def get_api_metadata() -> APIMetadata:
-    """Fetches metadata from the openbrewerydb API and converts to a pydantic
-    model.
-
-    Returns:
-        APIMetadata: Information regarding the number of entries.
-    """
-    url = "https://api.openbrewerydb.org/v1/breweries/meta"
-    return APIMetadata(**requests.request("GET", url).json())
-
-
-def get_api_data(page: int, per_page: int = 50) -> list[BreweryData]:
-    """Fetches data from the openbrewerydb API and converts to a pydantic
-    model.
-
-    Args:
-        page(int): Page to get data.
-        per_page(int): Number of entries per page. Defaults to `50`.
-
-    Returns:
-        list[BreweryData]: List of entries from the API.
-    """
-    url = "https://api.openbrewerydb.org/v1/breweries"
-    response = requests.request("GET", url, params={"per_page": per_page, "page": page})
-    return TypeAdapter(list[BreweryData]).validate_python(response.json())
 
 
 def save_json(filepath: str, data: list[dict] | dict):
@@ -80,76 +30,6 @@ def save_json(filepath: str, data: list[dict] | dict):
 
     with open(filepath, "w") as file:
         file.write(json.dumps(data))
-
-
-def generate_aggregate_query(
-    read_filepath: str, read_method: str = "read_parquet"
-) -> str:
-    """Query to create the aggregation of the quantity
-    of brewery types and location using DuckDB.
-
-    Args:
-        read_filepath(str): file path for reading the data.
-        read_method(str): Method to read the file. Defaults to `read_parquet`.
-
-    Returns:
-        str: generated query.
-    """
-    return f"""
-        SELECT 
-            brewery_type
-            , country
-            , state
-            , city
-            , COUNT(*)
-        FROM {read_method}('{read_filepath}')
-        GROUP BY
-            brewery_type
-            , country
-            , state
-            , city
-        ORDER BY
-            brewery_type DESC
-            , country DESC
-            , state DESC
-            , city DESC
-        """
-
-
-def generate_transform_query(
-    read_filepath: str, read_method: str = "read_json_auto"
-) -> str:
-    """Query to transform JSON data using DuckDB.
-
-    Args:
-        read_filepath(str): file path for reading the data.
-        read_method(str): Method to read the file. Defaults to `read_json_auto`.
-
-    Returns:
-        str: generated query.
-    """
-    return f"""
-        SELECT
-            id
-            , name
-            , address_1
-            , address_2
-            , address_3
-            , LOWER(brewery_type) AS brewery_type
-            , LOWER(city) AS city
-            , LOWER(state_province) AS state_province
-            , LOWER(state) AS state
-            , LOWER(country) AS contry
-            , postal_code
-            , CAST(longitude AS FLOAT) AS longitude
-            , CAST(latitude AS FLOAT) AS latitude
-            , phone
-            , CASE
-                WHEN website_url LIKE '%@gmail.com%' THEN NULL
-                ELSE website_url
-            END AS website_url
-        FROM {read_method}('{read_filepath}')
-        """
 
 
 def sla_callback(
